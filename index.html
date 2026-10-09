@@ -3,17 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <title>Sistem Data Pegawai</title>
+    <style>
+        body{
+            background-color: blanchedalmond;
+            font-family: Arial, Helvetica, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .pegawai-card {
+            background-color: white;
+            padding: 50px;
+            border-radius: 7px;
+            width: 500px;
+            margin-top: 100px;
+        }
+
+        .btn-Input {
+            width: 100%;
+            padding: 15px;
+            background-color:  #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: medium;
+            margin-top: 10px;
+        }
+        .form-grup input {
+            width: 80%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            
+        }
+        .form-baris {
+            display: flex;
+            gap: 15px;
+        }
+        .form-baris .form-grup {
+            flex: 1;
+            margin-bottom: 15px;
+        }
+
+
+    </style>
 </head>
 <body>
-    <h2>FORMULIR INPUT DATA PEGAWAI</h2>
     <form action="/simpan" method="POST">
-        <label>Nama Pegawai:</label><br>
-        <input type="text" name="nama_pegawai" required><br><br>
+        <div class="pegawai-card">
+            <h2 style="text-align: center; margin-bottom: 40px;">FORMULIR INPUT DATA PEGAWAI</h2>
+            <div class="form-baris">
+                <div class="form-grup input">
+                    <label>NIP Pegawai: </label><br>
+                    <input type="number" name="nip_pegawai" required><br><br>
+                </div> 
+            
+                <div class="form-grup">
+                    <label>Nomor Telepon:</label>
+                    <input type="number" name="no_telepon" required>
+                </div>
+            </div>
 
-        <label>Umur:</label><br>
-        <input type="number" name="umur_pegawai" required><br><br>
+            <div class="form-baris">
+                <div class="form-grup input">   
+                    <label>Nama Pegawai:</label><br>
+                    <input type="text" name="nama_pegawai" required><br><br>
+                </div>
 
-        <button type="submit">Simpan Data</button>
+                <div class="form-grup">
+                    <label">Email Pegawai: </label>
+                    <input type="email" name="email_pegawai" required>
+                </div>
+
+            </div>
+            <div class="form-grup input">
+                <label>Umur:</label><br>
+                <input type="number" name="umur_pegawai" required><br><br>
+            </div>
+              
+            <button type="submit" class="btn-Input">Simpan Data</button>
+            
+        </div>
     </form>
+    <small style= "color: grey; font-size: smaller; display: block; margin-top: 6px; ">
+         Agar tidak terjadi kesalahan pastikan angka dan huruf kapital sesuai
+        
+    </small>
 </body>
 </html>
