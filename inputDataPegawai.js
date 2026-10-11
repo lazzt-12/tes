@@ -1,5 +1,5 @@
 const express = require('express');
-const { Client } = require('pg');
+const { Client, Pool, Result } = require('pg');
 const app = express();
 
 
@@ -22,20 +22,60 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname +'/login.html')
 });
 
+app.get('/lupa-pass', (req, res) => {
+    res.sendFile(__dirname + '/lupaPass.html');
+});
+
 app.get('/form-pegawai', (req, res) => {
     res.sendFile(__dirname + '/index.html')
 });
+
+app.post('/lupa-pass', (req, res) => {
+    let user = req.body.usernameInput;
+    let newPass = req.body.newPasswordInput;
+
+    let sqlCek = "SELECT * FROM admin_login where username = $1";
+
+    db.query(sqlCek, [user], (err, Result) => {
+
+        if(err) return res.send("terjadi kesalahan database saat mengecek username");
+        if (Result.rows.lengt === 0) {
+            return res.send("Maaf username tidak ada <br><br> <a href='/lupa-pass'>Coba Lagi</a>");
+        }
+
+        let sqlUpdate = "UPDATE admin_login set password = $1 where username = $2";
+
+        db.query(sqlUpdate, [newPass, user], (errUpdate, ResultUpdate) =>{
+            if (errUpdate){
+                res.send("gagal mengubah kata sandi");
+            } else {
+                console.log("Kata sandi untuk" + user + "Berhasil Diubah!");
+                res.send("kata sandi berhasil di ubah <br><br> <a href='/'>Kembali ke Login</a>");
+            }
+                
+            
+        })
+    })
+})
 app.post('/proses-login', (req, res) => {
     let user = req.body.usernameInput;
     let pass = req.body.passwordInput;
 
-    if(user === "admin" && pass === "rahasia123" ) {
-        res.redirect('/form-pegawai');
-    }else{
-        res.send(`
-            <h2 style="color: red;">Username atau Password salah!</h2>
-            <a href="/login">Kembali ke halaman login</a>`);
-    }
+    let sql = "SELECT * FROM admin_login where username = $1 and password = $2";
+
+    db.query(sql, [user, pass], (err, Result) => {
+        if (err) {
+            console.error("terjadi error database: ", err);
+            return res.send("terjadi kesalahan pada server");
+        }
+        if (Result.rows.length > 0) {
+            console.log("Login berhasil untuk pengguna: ", user);
+            res.redirect('/form-pegawai');
+        } else {
+            console.log("percobaan login gagal.")
+            res.send("Maaf username atau password salah. <br><br> <a href ='/'>kembali ke Login</a>");
+        }
+    });
 });
 app.post('/simpan', async (req, res) => {
     try {
