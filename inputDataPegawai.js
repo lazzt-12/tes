@@ -26,8 +26,20 @@ app.get('/lupa-pass', (req, res) => {
     res.sendFile(__dirname + '/lupaPass.html');
 });
 
-app.get('/form-pegawai', (req, res) => {
-    res.sendFile(__dirname + '/index.html')
+
+app.get('/dashboard', (req, res) => {  
+    res.sendFile(__dirname + '/dashboard.html')
+});
+
+app.get('/api/data-pegawai', (req, res) => {
+    let sqlTampil = "SELECT * FROM data_pegawai";
+    db.query(sqlTampil, (err, Result) => {
+        if (err) {
+            console.error("EROR DATA BASE: ", err);
+            return res.status(500).json({error: "data tidak terambil"});
+        }
+        res.json(Result.rows);
+    });
 });
 
 app.post('/lupa-pass', (req, res) => {
@@ -54,9 +66,9 @@ app.post('/lupa-pass', (req, res) => {
             }
                 
             
-        })
-    })
-})
+        });
+    });
+});
 app.post('/proses-login', (req, res) => {
     let user = req.body.usernameInput;
     let pass = req.body.passwordInput;
@@ -70,7 +82,7 @@ app.post('/proses-login', (req, res) => {
         }
         if (Result.rows.length > 0) {
             console.log("Login berhasil untuk pengguna: ", user);
-            res.redirect('/form-pegawai');
+            res.redirect('/dashboard');
         } else {
             console.log("percobaan login gagal.")
             res.send("Maaf username atau password salah. <br><br> <a href ='/'>kembali ke Login</a>");
@@ -90,16 +102,8 @@ app.post('/simpan', async (req, res) => {
 
         await db.query(perintahSQL, isiData);
 
-        res.send(`
-            <h2>Data berhasil disimpan ke PostgreSQL!</h2>
-            <p>Nama: <b>${nama}</b></p>
-            <p>Umur: <b>${umur}</b></p>
-            <p>NIP: <b>${nip}</b></p>
-            <p>Nomor: <b>${nomor}</b></p>
-            <p>Email: <b>${email}</b></p>
-            <br>
-            <a href="/">[ Kembali Isi Data ]</a>
-        `);
+        res.redirect('/dashboard');
+        
     } catch (error) {
         console.log("Terjadi error saat simpan:", error.message);
         res.send("Maaf, terjadi kesalahan sistem.");
