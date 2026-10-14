@@ -6,80 +6,121 @@
     <style>
         body {font-family: Arial, sans-serif; background-color: blanchedalmond; padding: 20px; margin: 0;}
         .header {display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;}
-        .btn-logout {background-color: red; color: white; padding: 10px 15px; text-decoration: solid; border-radius: 4px; font-weight: bold;}
-        .container {display: flex; gap: 20px; align-items: flex-start;}
+        .btn-logout {background-color: red; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; font-weight: bold;}
+        .menu-navigasi {display: flex; gap: 10px; margin-bottom: 20px;}
+        .btn-tab {background-color: #6c757d; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;}
+        .btn-tab :hover {background-color: #5a6268; }
+        .btn-tab.aktif {background-color: #007bff;}
+        
         .card {background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);}
-        .kolom-form {flex: 1;}
-        .kolom-data {flex: 2; overflow-x: auto;}
+       
+
         .form-grup {margin-bottom: 15px;}
         .form-grup label {display: block; margin-bottom: 5px; color: #333; font-weight: bold;}
         .form-grup input {width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;}
-        .btn-simpan {width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;}
-        .btn-simpan :hover {background-color: #0056b3;}
-
-        table{width: 100%; border-collapse: collapse;}
+        .btn-simpan {width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: bold;}
+        
+        .kotak-ringkasan {background-color: #e9ecef; padding: 20; border-radius: 8px; text-align: center; margin-bottom: 15px;}
+        .angka-besar {font-size: 40px; font-weight: bold; color:#007bff; margin: 10px 0;}
+        table{width: 100%; border-collapse: collapse; margin-top: 15px;}
         th, td {border: 1px solid #ddd; padding: 12px; text-align: left;}
         th {background-color: #007bff; color: white;}
         tr:nth-child(even) {background-color: #f9f9f9;} 
+
+        #slide-tabel {display: none;}
     </style>
 </head>
 
 <body>
     <div class="header">
-        <h2 style="color: #333; margin: 0;">DASHBOARD DATA KEPEGAWAIAN</h2>
-        <a href="/" class="btn-logout">logout</a> 
+        <h2 style="color: #333; margin: 0;">SISTEM KEPEGAWAIAN</h2>
+        <a href="/" class="btn-logout">Logout</a>
     </div>
-    <div class="container">
-        <div class="card kolom-form">
-            <h3 style="margin-top: 0;">tambah pegawai baru</h3>
-            <form action="/simpan" method="post">
-                <div class="form-grup">
-                    <label>NIP pegawai</label>
-                    <input type ="number" name="nip_pegawai" required>
-                </div>
-                <div class="form-grup">
-                    <label>NAMA Pegawai</label>
-                    <input type="text" name="nama_pegawai" required>
-                </div>
-                <div class="form-grup">
-                    <label>Umur</label>
-                    <input type ="number" name="umur_pegawai" required>
-                </div>
-                <div class="form-grup">
-                    <label>Nomor pegawai</label>
-                    <input type="nomor" name="no_telepon" required>
-                </div>
-                <div class="form-grup">
-                    <label>Email Pegawai</label>
-                    <input type="email" name="email_pegawai" required>
-                </div>
-                <button type="submit" class="btn-simpan">SIMPAN DATA</button>
-            </form>
-        </div>
 
-        <div class="card kolom-data">
-            <h3 style="margin-top: 0;">DAFTAR PEGAWAI TERDAFTAR</h3>
+    <div class="menu-navigasi">
+        <button class="btn-tab aktif" id="tombol-form" onclick="bukaSlide('form')">INPUT DATA PEGAWAI</button>
+        <button class="btn-tab" id="tombol-tabel" onclick="bukaSlide('tabel')">LIHAT DATA PEGAWAI</button>
+    </div>
+
+    <div class="card" id="slide-form">
+        <h3 style="margin-top: 0; color: #333;">Tambahkan Pegawai</h3>
+        <form action="/simpan" method="post">
+            <div class="form-grup">
+                <label>NIP pegawai</label>
+                <input type ="number" name="nip_pegawai" required>
+            </div>
+            <div class="form-grup">
+                <label>NAMA Pegawai</label>
+                <input type="text" name="nama_pegawai" required>
+            </div>
+            <div class="form-grup">
+                <label>Umur</label>
+                <input type ="number" name="umur_pegawai" required>
+            </div>
+            <div class="form-grup">
+                <label>Nomor pegawai</label>
+                <input type="nomor" name="no_telepon" required>
+            </div>
+            <div class="form-grup">
+                <label>Email Pegawai</label>
+                <input type="email" name="email_pegawai" required>
+            </div> 
+            <button type="submit" class="btn-simpan">SIMPAN DATA</button>   
+        </form>
+        </div>
+        <div class="card" id="slide-tabel">
+            <h3 style="margin-top: 0; color: #333;">daftar pegawai baru</h3>
+
+            <div class="kotak-ringkasan">
+                <p style="margin: 0; font-size: 18px;">Total Pegawai Terdaftar</p>
+                <div class="angka-besar" id="teks-angka-total">0</div>
+            </div>
+
             <table>
                 <thead>
-                    <tr>
-                        <th>NIP</th>
-                        <th>Nama Pegawai</th>
-                        <th>Umur</th>
-                        <th>No. telepon</th>
-                        <th>Email</th>
-                    </tr>
+                        <tr>
+                            <th>NIP</th>
+                            <th>Nama Pegawai</th>
+                            <th>Umur</th>
+                            <th>No. telepon</th>
+                            <th>Email</th>
+                        </tr>
                 </thead>
                 <tbody  id="wadah-table">
                     <tr><td colspan="5">sedang memuat data base...</td></tr>
                 </tbody>
             </table>
+            
         </div>
-    </div>
+
+    
     
     <script>
+
+        function bukaSlide(target) {
+            let form = document.getElementById('slide-form');
+            let tabel = document.getElementById('slide-tabel');
+            let tombolForm = document.getElementById('tombol-form');
+            let tombolTabel = document.getElementById('tombol-tabel');
+
+            if (target === 'form') {
+                form.style.display = 'block';
+                tabel.style.display = 'none';
+                tombolForm.classList.add('aktif');
+                tombolTabel.classList.remove('aktif');
+            }
+            else if (target === 'tabel') {
+                form.style.display = 'none';
+                tabel.style.display = 'block';
+                tombolForm.classList.remove('aktif');
+                tombolTabel.classList.add('aktif');
+            }
+        }
         fetch('/api/data-pegawai')
             .then(respon => respon.json())
             .then(dataPegawai => {
+
+                document.getElementById('teks-angka-total').innerText = dataPegawai.length;
                 const wadah = document.getElementById('wadah-table');
                 wadah.innerHTML = "";
 
@@ -96,8 +137,10 @@
                 });
             })
             .catch(error => {
+                document.getElementById('teks-angka-total').innerText ="Error;"
                 document.getElementById('wadah-tabel').innerHTML = "<tr><td colspan='5'>Gagal memuat data</td></tr>";
-            })
+            });
+
     </script>
     
 </body>
