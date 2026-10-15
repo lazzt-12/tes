@@ -35,15 +35,36 @@ app.get('/kelola-admin', (req, res) => {
     res.sendFile(__dirname + '/tambahAdmin.html')
 });
 
-app.get('/api/data-pegawai', (req, res) => {
-    let sqlTampil = "SELECT * FROM data_pegawai";
-    db.query(sqlTampil, (err, Result) => {
-        if (err) {
-            console.error("EROR DATA BASE: ", err);
-            return res.status(500).json({error: "data tidak terambil"});
-        }
-        res.json(Result.rows);
-    });
+app.get('/api/total-pegawai', async (req, res) => {
+    try {
+        let perintahSQL = "SELECT COUNT(*) as total FROM data_pegawai";
+        let hasil = await db.query(perintahSQL);
+        res.json({total: hasil.rows[0].total});
+    } catch (error) {
+        console.log("Error hitung total:", error.message);
+        res.status(500).send("error database");
+    }
+});
+
+app.get('/api/pegawai-baru', async (req, res) => {
+    try {
+        let perintahSQL = "select * from data_pegawai WHERE tanggal_masuk >= CURRENT_DATE - INTERVAL '1 YEAR'";
+        let hasil = await db.query(perintahSQL)
+        res.json(hasil.rows);
+    } catch (error) {
+        console.log("Eror saat mengambil data pegawai baru", error.message);
+        res.status(500).send("error database")
+    }
+});
+app.get('/api/pegawai-lama', async (req, res) => {
+    try {
+        let perintahSQL = "select * from data_pegawai WHERE tanggal_masuk < CURRENT_DATE - INTERVAL '1 YEAR'";
+        let hasil = await db.query(perintahSQL)
+        res.json(hasil.rows);
+    } catch (error) {
+        console.log("Eror saat mengambil data pegawai lama", error.message);
+        res.status(500).send("error database")
+    }
 });
 
 

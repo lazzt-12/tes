@@ -29,6 +29,7 @@
         tr:nth-child(even) {background-color: #f9f9f9;} 
 
         #slide-tabel {display: none;}
+        #area-tabel-pegawai {display: none;}
     </style>
 </head>
 
@@ -76,29 +77,42 @@
             <div class="kotak-ringkasan">
                 <p style="margin: 0; font-size: 18px;">Total Pegawai Terdaftar</p>
                 <div class="angka-besar" id="teks-angka-total">0</div>
+                <button id="tombol-selengkapnya" onclick="bukaTablePegawai()" style="padding: 10px; background-color: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer;">SELENGKAPNYA</button>
             </div>
 
-            <table>
-                <thead>
-                        <tr>
-                            <th>NIP</th>
-                            <th>Nama Pegawai</th>
-                            <th>Umur</th>
-                            <th>No. telepon</th>
-                            <th>Email</th>
-                        </tr>
-                </thead>
-                <tbody  id="wadah-table">
-                    <tr><td colspan="5">sedang memuat data base...</td></tr>
-                </tbody>
-            </table>
-            
+            <div id="area-tabel-pegawai">
+                <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                    <button onclick="tarikDataPegawai('baru')" style="padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                        tampilkan pegawai baru (< 1 tahun)
+                    </button>
+                    <button onclick="tarikDataPegawai('lama')" style="padding: 10px; background-color: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                        tampilkan pegawai lama (> 1 tahun)
+                    </button>
+                </div>
+
+                <p style="margin-bottom: 10px; font-weight: bold; color: #555; font-size: 14px;">
+                    jumlah pegawai: <span id ="angka-tabel-aktif" style="color: 007bf;">0</span> 
+                </p>
+                <table>
+                    <thead>
+                            <tr>
+                                <th>NIP</th>
+                                <th>Nama Pegawai</th>
+                                <th>Umur</th>
+                                <th>No. telepon</th>
+                                <th>Email</th>
+                            </tr>
+                    </thead>
+                    <tbody  id="wadah-tabel">
+                        <tr><td colspan="5">sedang memuat data base...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
     
     
     <script>
-
         function bukaSlide(target) {
             let form = document.getElementById('slide-form');
             let tabel = document.getElementById('slide-tabel');
@@ -118,31 +132,70 @@
                 tombolTabel.classList.add('aktif');
             }
         }
-        fetch('/api/data-pegawai')
-            .then(respon => respon.json())
-            .then(dataPegawai => {
 
-                document.getElementById('teks-angka-total').innerText = dataPegawai.length;
-                const wadah = document.getElementById('wadah-table');
-                wadah.innerHTML = "";
+        function bukaTablePegawai() {
+            let tabel = document.getElementById('area-tabel-pegawai');
+            let tombol = document.getElementById('tombol-selengkapnya');
 
-                dataPegawai.forEach(pegawai => {
-                    wadah.innerHTML += `
-                        <tr>
-                            <td>${pegawai.nip}</td>
-                            <td>${pegawai.nama}</td>
-                            <td>${pegawai.umur}</td>
-                            <td>${pegawai.nomor}</td>
-                            <td>${pegawai.email}</td>
-                        </tr>
-                    `;
-                });
-            })
-            .catch(error => {
-                document.getElementById('teks-angka-total').innerText ="Error;"
-                document.getElementById('wadah-tabel').innerHTML = "<tr><td colspan='5'>Gagal memuat data</td></tr>";
-            });
+            if(tabel.style.display === 'none' || tabel.style.display === ''){
+                tabel.style.display ='block';
+                tombol.innerText ='Tutup data';
+                tombol.style.backgroundColor ='#dc3545';
+            } else {
+                tabel.style.display = 'none';
+                tombol.innerText ='SELENGKAPNYA';
+                tombol.style.backgroundColor = '#17a2b8';
+            }
+        }
 
+        function ambilTotalSemuaPegawai() {
+            fetch('/api/total-pegawai')
+                .then(respon => respon.json())
+                .then(data => {
+                    
+                    document.getElementById('teks-angka-total').innerText = data.total;
+                })
+                .catch(error => console.log("Gagal memuat total:", error));
+        }
+
+        function tarikDataPegawai(kategori) {
+            let urlTujuan = '';
+            
+            if (kategori === 'baru') {
+                urlTujuan = '/api/pegawai-baru';
+            } else if (kategori === 'lama') {
+                urlTujuan = '/api/pegawai-lama';
+            }
+
+            fetch(urlTujuan)
+                .then(respon => respon.json())
+                .then(dataPegawai => {
+                   document.getElementById('angka-tabel-aktif').innerText = dataPegawai.length 
+
+                    const wadah = document.getElementById('wadah-tabel');
+                    wadah.innerHTML = "";
+            
+                    if (dataPegawai.length === 0) {
+                        wadah.innerHTML = "<tr><td colspan='5' style='text-align: center;'>Tidak ada data di kategori ini.</td></tr>";
+                    } else {
+                        dataPegawai.forEach(pegawai => {
+                            wadah.innerHTML += `
+                                <tr>
+                                    <td>${pegawai.nip}</td>
+                                    <td>${pegawai.nama}</td>
+                                    <td>${pegawai.umur}</td>
+                                    <td>${pegawai.nomor}</td>
+                                    <td>${pegawai.email}</td>
+                                </tr>`;
+                        });
+                    }
+                })
+                .catch(error => console.log("Gagal memuat data:", error));
+        }
+
+        ambilTotalSemuaPegawai(); 
+        tarikDataPegawai('baru'); 
+        
     </script>
     
 </body>
