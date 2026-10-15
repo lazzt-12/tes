@@ -31,6 +31,10 @@ app.get('/dashboard', (req, res) => {
     res.sendFile(__dirname + '/dashboard.html')
 });
 
+app.get('/kelola-admin', (req, res) => {
+    res.sendFile(__dirname + '/tambahAdmin.html')
+});
+
 app.get('/api/data-pegawai', (req, res) => {
     let sqlTampil = "SELECT * FROM data_pegawai";
     db.query(sqlTampil, (err, Result) => {
@@ -41,6 +45,8 @@ app.get('/api/data-pegawai', (req, res) => {
         res.json(Result.rows);
     });
 });
+
+
 
 app.post('/lupa-pass', (req, res) => {
     let user = req.body.usernameInput;
@@ -107,6 +113,23 @@ app.post('/simpan', async (req, res) => {
     } catch (error) {
         console.log("Terjadi error saat simpan:", error.message);
         res.send("Maaf, terjadi kesalahan sistem.");
+    }
+});
+
+app.post('/kelola-admin', async (req, res) => {
+    try {
+        let userBaru = req.body.username_baru;
+        let passBaru = req.body.password_baru;
+
+        let perintahSQL = "insert into admin_login (username, password) values ($1, $2)";
+        isiData = [userBaru, passBaru];
+
+        db.query(perintahSQL, isiData);
+
+        res.redirect('/dashboard');
+    } catch (error) {
+        console.log("Error tambah admin:", error.message);
+        res.send("Maaf, terjadi kesalahan saat membuat akun baru.");
     }
 });
 
