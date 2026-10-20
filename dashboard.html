@@ -47,38 +47,112 @@
 
     <div class="card" id="slide-form">
         <h3 style="margin-top: 0; color: #333;">Tambahkan Pegawai</h3>
-        <form action="/simpan" method="post">
-            <div class="form-grup">
-                <label>NIP pegawai</label>
-                <input type ="number" name="nip_pegawai" required>
+        <form action="/simpan" method="post" enctype="multipart/form-data">
+
+            <div style="display: flex; gap: 20px; align-items: flex-start;">
+
+                <div style="width: 250px; flex-shrink: 0;">
+                    <div style="background-color: #f8f9fa; padding: 15px; border: 1px solid #ccc; border-radius: 8px; text-align: center;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: bold;">Foto Profile</label>
+
+                        <div style="width: 100%; height: 260px; background-color: #e9ecef; border: 2px dashed #adb5bd; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 4px; ">
+                            <img id="preview-gambar" src="#" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                            <span id="teks-preview" style="color: #6c757d; font-size: 14px;">Belum Ada Foto</span>
+                        </div>
+
+                        <input type="file" name="foto_pegawai" accept="image/*" onchange="tampilkanPreview(this)" style="width: 100%; box-sizing: border-box; font-size: 14px;">
+                    </div>
+                </div>
+
+                <div style="flex: 1;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px">
+                        <div class="form-grup">
+                            <label>NIP pegawai</label>
+                            <input type ="number" name="nip_pegawai" required>
+                        </div>
+                        <div class="form-grup">
+                            <label>NAMA Pegawai</label>
+                            <input type="text" name="nama_pegawai" required>
+                        </div>
+                        <div class="form-grup">
+                            <label>Umur</label>
+                            <input type ="number" name="umur_pegawai" required>
+                        </div>
+                        <div class="form-grup">
+                            <label>Nomor pegawai</label>
+                            <input type="nomor" name="no_telepon" required>
+                        </div>
+                        <div class="form-grup">
+                            <label>Email Pegawai</label>
+                            <input type="email" name="email_pegawai" required>
+                        </div> 
+                        <div class="form-grup">
+                            <label>Tanggal Masuk Kerja</label>
+                            <input type="date" name="tanggal_masuk" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                        </div>
+                        <div class="form-grup">
+                            <label>Status Pegawai</label>
+                            <select name="status_pegawai" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; ">
+                                <option value="Aktif">AKTIF</option>
+                                <option value="Nonaktif">NONAKTIF</option>
+                            </select>
+                        </div>
+                        <div class="form-grup">
+                            <label>Unit Kerja</label>
+                            <select name="unit_kerja" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                                <option value="dokter">DOKTER</option>
+                                <option value="perawat">PERAWAT</option>
+                                <option value="it">tim IT</option>
+                                <option value="keuangan">KEUANNGAN</option>
+                                <option value="humas">HUMAS</option>
+                            </select>
+                        </div>
+                        <div class="form-grup">
+                            <label>JABATAN</label>
+                            <select name="jabatan" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                                <option value="kepala-ruangan">KEPALA RUANGAN</option>
+                                <option value="kepala-tim">KEPALA TIM</option>
+                                <option value="staff">STAFF</option>
+                                <option value="magang">MAGANG</option>
+                            </select>
+                        </div>
+                        <div class="form-grup">
+                            <label>Pangkat / Golongan</label>
+                            <input type="text" name="pangkat" placeholder="CONTOH: Golongan III/a" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px;">
+                        </div>
+                        <div class="form-grup">
+                            <label>Ruangan</label>
+                            <input type="text" name="ruangan" placeholder="CONTOH: ruang beo lantai 2" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px;">
+                        </div>
+                    </div>
+                </div>  
             </div>
-            <div class="form-grup">
-                <label>NAMA Pegawai</label>
-                <input type="text" name="nama_pegawai" required>
-            </div>
-            <div class="form-grup">
-                <label>Umur</label>
-                <input type ="number" name="umur_pegawai" required>
-            </div>
-            <div class="form-grup">
-                <label>Nomor pegawai</label>
-                <input type="nomor" name="no_telepon" required>
-            </div>
-            <div class="form-grup">
-                <label>Email Pegawai</label>
-                <input type="email" name="email_pegawai" required>
-            </div> 
+        
             <button type="submit" class="btn-simpan">SIMPAN DATA</button>   
         </form>
-        </div>
+    </div>
         <div class="card" id="slide-tabel">
             <h3 style="margin-top: 0; color: #333;">daftar pegawai baru</h3>
 
-            <div class="kotak-ringkasan">
-                <p style="margin: 0; font-size: 18px;">Total Pegawai Terdaftar</p>
-                <div class="angka-besar" id="teks-angka-total">0</div>
-                <button id="tombol-selengkapnya" onclick="bukaTablePegawai()" style="padding: 10px; background-color: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer;">SELENGKAPNYA</button>
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <div class="kotak-ringkasan" style="flex: 1; margin-bottom: 0;">
+                    <p style="margin: 0; font-size: 16px;">Total Pegawai</p>
+                    <div class="angka-besar" id="teks-angka-total" style="color: #007bff;">0</div>
+                </div>
+                <div class="kotak-ringkasan" style="flex: 1; margin-bottom: 0; background-color: #d4edda;">
+                    <p style="margin: 0; font-size: 16px; color: #155724;">Pegawai Aktif</p>
+                    <div class="angka-besar" id="teks-angka-aktif" style="color: #28a745;">0</div> 
+                </div>
+                <div class="kotak-ringkasan" style="flex: 1; margin-bottom: 0; background-color: #f8d7da;">
+                    <p style="margin: 0; font-size: 16px; color: #721c24;">Pegawai Nonaktif</p>
+                    <div class="angka-besar" id="teks-angka-nonaktif" style="color: #dc3545;">0</div>
+                </div>
             </div>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <button id="tombol-selengkapnya" onclick="bukaTabelPegawai()" style="padding: 10px 20px; background-color: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">BUKA TABEL</button>
+            </div>
+
+            
 
             <div id="area-tabel-pegawai">
                 <div style="margin-bottom: 15px; display: flex; gap: 10px;">
@@ -90,10 +164,15 @@
                     </button>
                 </div>
 
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="input-pencarian" onkeyup="cariPegawai()" placeholder="cari nama, nip, atau pegawai..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px;">
+                </div>
                 <p style="margin-bottom: 10px; font-weight: bold; color: #555; font-size: 14px;">
                     jumlah pegawai: <span id ="angka-tabel-aktif" style="color: 007bf;">0</span> 
                 </p>
-                <table>
+
+                <div style="overflow-x: auto; width: 100%; border-radius: 8px;">
+                    <table>
                     <thead>
                             <tr>
                                 <th>NIP</th>
@@ -101,102 +180,25 @@
                                 <th>Umur</th>
                                 <th>No. telepon</th>
                                 <th>Email</th>
+                                <th>Tanggal Masuk</th>
+                                <th>Status</th>
+                                <th>Unit Kerja</th>
+                                <th>Jabatan</th>
+                                <th>Pangkat</th>
+                                <th>Ruangan</th>
                             </tr>
                     </thead>
                     <tbody  id="wadah-tabel">
-                        <tr><td colspan="5">sedang memuat data base...</td></tr>
+                        <tr><td colspan="11">sedang memuat data base...</td></tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
 
     
     
-    <script>
-        function bukaSlide(target) {
-            let form = document.getElementById('slide-form');
-            let tabel = document.getElementById('slide-tabel');
-            let tombolForm = document.getElementById('tombol-form');
-            let tombolTabel = document.getElementById('tombol-tabel');
-
-            if (target === 'form') {
-                form.style.display = 'block';
-                tabel.style.display = 'none';
-                tombolForm.classList.add('aktif');
-                tombolTabel.classList.remove('aktif');
-            }
-            else if (target === 'tabel') {
-                form.style.display = 'none';
-                tabel.style.display = 'block';
-                tombolForm.classList.remove('aktif');
-                tombolTabel.classList.add('aktif');
-            }
-        }
-
-        function bukaTablePegawai() {
-            let tabel = document.getElementById('area-tabel-pegawai');
-            let tombol = document.getElementById('tombol-selengkapnya');
-
-            if(tabel.style.display === 'none' || tabel.style.display === ''){
-                tabel.style.display ='block';
-                tombol.innerText ='Tutup data';
-                tombol.style.backgroundColor ='#dc3545';
-            } else {
-                tabel.style.display = 'none';
-                tombol.innerText ='SELENGKAPNYA';
-                tombol.style.backgroundColor = '#17a2b8';
-            }
-        }
-
-        function ambilTotalSemuaPegawai() {
-            fetch('/api/total-pegawai')
-                .then(respon => respon.json())
-                .then(data => {
-                    
-                    document.getElementById('teks-angka-total').innerText = data.total;
-                })
-                .catch(error => console.log("Gagal memuat total:", error));
-        }
-
-        function tarikDataPegawai(kategori) {
-            let urlTujuan = '';
-            
-            if (kategori === 'baru') {
-                urlTujuan = '/api/pegawai-baru';
-            } else if (kategori === 'lama') {
-                urlTujuan = '/api/pegawai-lama';
-            }
-
-            fetch(urlTujuan)
-                .then(respon => respon.json())
-                .then(dataPegawai => {
-                   document.getElementById('angka-tabel-aktif').innerText = dataPegawai.length 
-
-                    const wadah = document.getElementById('wadah-tabel');
-                    wadah.innerHTML = "";
-            
-                    if (dataPegawai.length === 0) {
-                        wadah.innerHTML = "<tr><td colspan='5' style='text-align: center;'>Tidak ada data di kategori ini.</td></tr>";
-                    } else {
-                        dataPegawai.forEach(pegawai => {
-                            wadah.innerHTML += `
-                                <tr>
-                                    <td>${pegawai.nip}</td>
-                                    <td>${pegawai.nama}</td>
-                                    <td>${pegawai.umur}</td>
-                                    <td>${pegawai.nomor}</td>
-                                    <td>${pegawai.email}</td>
-                                </tr>`;
-                        });
-                    }
-                })
-                .catch(error => console.log("Gagal memuat data:", error));
-        }
-
-        ambilTotalSemuaPegawai(); 
-        tarikDataPegawai('baru'); 
-        
-    </script>
+    <script src="/dashboard.js"></script>
     
 </body>
 </html>

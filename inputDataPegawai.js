@@ -1,10 +1,23 @@
 const express = require('express');
 const { Client, Pool, Result } = require('pg');
+const multer = require('multer');
+const path = require('path');
 const app = express();
 
 
 app.use(express.urlencoded({ extended: true }));
 
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
+
+app.use('/uploads', express.static('uploads'));
 
 const db = new Client({
     user: 'postgres',
@@ -26,9 +39,12 @@ app.get('/lupa-pass', (req, res) => {
     res.sendFile(__dirname + '/lupaPass.html');
 });
 
-
 app.get('/dashboard', (req, res) => {  
     res.sendFile(__dirname + '/dashboard.html')
+});
+
+app.get('/dashboard.js', (req, res) => {
+    res.sendFile(__dirname + '/dashboard.js');
 });
 
 app.get('/kelola-admin', (req, res) => {
@@ -37,13 +53,21 @@ app.get('/kelola-admin', (req, res) => {
 
 app.get('/api/total-pegawai', async (req, res) => {
     try {
-        let perintahSQL = "SELECT COUNT(*) as total FROM data_pegawai";
-        let hasil = await db.query(perintahSQL);
-        res.json({total: hasil.rows[0].total});
+        let hasilTotal = await db.query("SELECT COUNT(*) as total FROM data_pegawai");
+        let hasilAktif = await db.query("SELECT COUNT(*) as aktif FROM data_pegawai WHERE status = 'Aktif' OR status IS NULL");
+        let hasilNonaktif = await db.query("SELECT COUNT(*) as nonaktif FROM data_pegawai WHERE status = 'Nonaktif'");
+
+        res.json({
+            total: hasilTotal.rows[0].total,
+            aktif: hasilAktif.rows[0].aktif,
+            nonaktif: hasilNonaktif.rows[0].nonaktif,
+
+        });
     } catch (error) {
-        console.log("Error hitung total:", error.message);
-        res.status(500).send("error database");
+        console.log("Error hitung statistik:", error.message);
+        res.status(500).send("Error database");
     }
+
 });
 
 app.get('/api/pegawai-baru', async (req, res) => {
@@ -67,6 +91,21 @@ app.get('/api/pegawai-lama', async (req, res) => {
     }
 });
 
+app.put('/api/ubah-status/:nip/:status_baru', async (req, res) => {
+    let nipPegawai = req.params.nip;
+    let statusBaru = req.params.status_baru;
+
+    try {
+        let perintahSQL = "UPDATE data_pegawai SET status = $1 WHERE nip = $2";
+
+        await db.query(perintahSQL, [statusBaru, nipPegawai]);
+
+        res.send("Status berhasil diubah menjadi " + statusBaru + "!");
+    } catch (error) {
+        console.log("Error ubah status: ", error.message);
+        res.status(500).send("Gagal mengubah status di database.");
+    }
+})
 
 
 app.post('/lupa-pass', (req, res) => {
@@ -116,16 +155,23 @@ app.post('/proses-login', (req, res) => {
         }
     });
 });
-app.post('/simpan', async (req, res) => {
+app.post('/simpan', upload.single('foto_pegawai'), async (req, res) => {
     try {
         let nama = req.body.nama_pegawai;
         let umur = Number(req.body.umur_pegawai);
         let nip = Number(req.body.nip_pegawai);
         let nomor = Number(req.body.no_telepon);
         let email = req.body.email_pegawai;
+        let status = req.body.status_pegawai;
+        let tanggal_masuk = req.body.tanggal_masuk;
+        let unitKerja = req.body.unit_kerja;
+        let jabatan = req.body.jabatan;
+        let pangkat = req.body.pangkat;
+        let ruangan = req.body.ruangan;
+        let foto = req.file ? req.file.filename : null;
 
-        let perintahSQL = "INSERT INTO data_pegawai (nama, umur, nip, nomor, email) VALUES ($1, $2, $3, $4, $5)";
-        let isiData = [nama, umur, nip, nomor, email];
+        let perintahSQL = "INSERT INTO data_pegawai (nama, umur, nip, nomor, email, status, tanggal_masuk, unit_kerja, jabatan, pangkat, ruangan, foto) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)";
+        let isiData = [nama, umur, nip, nomor, email, status, tanggal_masuk, unitKerja, jabatan, pangkat, ruangan, foto];
 
         await db.query(perintahSQL, isiData);
 
@@ -153,6 +199,7 @@ app.post('/kelola-admin', async (req, res) => {
         res.send("Maaf, terjadi kesalahan saat membuat akun baru.");
     }
 });
+
 
 app.listen(4001, () => {
     console.log("--> WEB MENYALA! Buka Chrome dan ketik: http://localhost:4001");
