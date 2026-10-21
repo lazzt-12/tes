@@ -2,6 +2,7 @@ const express = require('express');
 const { Client, Pool, Result } = require('pg');
 const multer = require('multer');
 const path = require('path');
+const { error } = require('console');
 const app = express();
 
 
@@ -200,6 +201,68 @@ app.post('/kelola-admin', async (req, res) => {
     }
 });
 
+app.get('/api/pegawai/:nip', async (req, res) => {
+    try {
+        let nipTarget = req.params.nip;
+        let hasil = await db.query("SELECT * FROM data_pegawai WHERE nip = $1", [nipTarget]);
+
+        if (hasil.rows.length > 0) {
+            res.json(hasil.rows[0]);
+        } else {
+            res.status(404).send("pegawai tidak ditemukan");
+        }   
+    } catch(error) {
+        console.log("Error saat ambil data pegawai:", error.message);
+        res.status(500).send("Error database");
+    }
+});
+
+app.post('/update-pegawai', async (req, res) => {
+    try {
+
+        let nipLama = req.body.nip_lama ? Number(req.body.nip_lama) : Number(req.body.nip_baru);
+        let namaBaru = req.body.nama_baru;
+        let nipBaru = Number(req.body.nip_baru);
+        let umurBaru = Number(req.body.umur_baru);
+        let nomorBaru = Number(req.body.nomor_baru);
+        let emailbaru = req.body.email_baru;
+        let unitBaru = req.body.unit_baru;
+        let jabatanBaru = req.body.jabatan_baru;
+        let pangkatBaru = req.body.pangkat_baru;
+        let ruanganbaru = req.body.ruangan_baru;
+
+        let perintahSQL = "UPDATE data_pegawai set nama=$1, nip=$2, umur=$3, nomor=$4, email=$5, unit_kerja=$6, jabatan=$7, pangkat=$8, ruangan=$9 WHERE nip=$10";
+        let data = [namaBaru, nipBaru, umurBaru, nomorBaru, emailbaru, unitBaru, jabatanBaru, pangkatBaru, ruanganbaru, nipLama]
+
+        await db.query(perintahSQL, data);
+        res.redirect('/dashboard');
+    } catch (error) {
+        console.log("Error saat melakukan update data:", error.message);
+        res.send("Maaf, gagal mengupdate data pegawai");
+    }
+});
+
+app.get('/api/unit-kerja', async (req, res) => {
+    try {
+        let hasil = await db.query("SELECT * FROM unit_kerja ORDER BY nama_unit ASC");
+        res.json(hasil.rows);
+    } catch (error) {
+        console.log("Error mengambil data master unit kerja:", error.message);
+        res.status(500).send("Error database");
+    }
+});
+
+app.post('/api/unit-kerja', async (req, res) =>{
+    try{
+        let namaUnit = req.body.nama_unit;
+        await db.query("INSERT INTO unit_kerja (nama_unit) VALUES ($1)", [namaUnit]);
+        res.redirect('/dashboard');
+
+    } catch (error) {
+        console.log("Error menambah unit kerja:", error.message);
+        res.status(500).send("Gagal menambah Unit kerja");
+    }
+});
 
 app.listen(4001, () => {
     console.log("--> WEB MENYALA! Buka Chrome dan ketik: http://localhost:4001");

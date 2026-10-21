@@ -91,13 +91,6 @@
                             <input type="date" name="tanggal_masuk" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
                         </div>
                         <div class="form-grup">
-                            <label>Status Pegawai</label>
-                            <select name="status_pegawai" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; ">
-                                <option value="Aktif">AKTIF</option>
-                                <option value="Nonaktif">NONAKTIF</option>
-                            </select>
-                        </div>
-                        <div class="form-grup">
                             <label>Unit Kerja</label>
                             <select name="unit_kerja" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
                                 <option value="dokter">DOKTER</option>
@@ -124,10 +117,16 @@
                             <label>Ruangan</label>
                             <input type="text" name="ruangan" placeholder="CONTOH: ruang beo lantai 2" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px;">
                         </div>
-                    </div>
-                </div>  
+                        <div class="form-grup">
+                            <label>Status Pegawai</label>
+                            <select name="status_pegawai" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; ">
+                                <option value="Aktif">AKTIF</option>
+                                <option value="Nonaktif">NONAKTIF</option>
+                            </select>
+                        </div>
+                    </div>  
+                </div>
             </div>
-        
             <button type="submit" class="btn-simpan">SIMPAN DATA</button>   
         </form>
     </div>
@@ -181,11 +180,11 @@
                                 <th>No. telepon</th>
                                 <th>Email</th>
                                 <th>Tanggal Masuk</th>
-                                <th>Status</th>
                                 <th>Unit Kerja</th>
                                 <th>Jabatan</th>
                                 <th>Pangkat</th>
                                 <th>Ruangan</th>
+                                <th>Status</th>
                             </tr>
                     </thead>
                     <tbody  id="wadah-tabel">
@@ -196,7 +195,69 @@
             </div>
         </div>
 
-    
+    <div id="modal-edit" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background-color: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 90hv; overflow: auto;">
+            <h3 style="margin-top: 0; color: #333;">EDIT DATA PEGAWAI</h3>
+            <form action="/update-pegawai" method="post">
+                <input type="hidden" name="nip_lama" id="edit-nip-lama">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-grup">
+                        <label>Nama Pegawai</label>
+                        <input type="text" name="nama_baru" id="edit-nama" required>
+                    </div>
+                    <div class="form-grup">
+                        <label>NIP</label>
+                        <input type="number" name="nip_baru" id="edit-nip" required>
+                    </div>
+                    <div class="form-grup">
+                        <label>Umur</label>
+                        <input type="number" name="umur_baru" id="edit-umur" required>
+                    </div>
+                    <div class="form-grup">
+                        <label>no. Telp</label>
+                        <input type="number" name="nomor_baru" id="edit-nomor" required>
+                    </div>
+                    <div class="form-grup">
+                        <label>Pangkat</label>
+                        <input type="text" name="pangkat_baru" id="edit-pangkat" required>
+                    </div>
+                    <div class="form-grup">
+                        <label>Email</label>
+                        <input type="email" name="email_baru" id="edit-email" required>
+                    </div>
+                    <div class="form-grup">
+                        <label>Jabatan</label>
+                        <select name="jabatan_baru" id="edit-jabatan" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                            <option value="kepala-ruangan">KEPALA RUANGAN</option>
+                            <option value="kepala-tim">KEPALA TIM</option>
+                            <option value="staff">STAFF</option>
+                            <option value="magang">MAGANG</option>
+                        </select>
+                    </div>
+                    <div class="form-grup">
+                        <label>Unit Kerja</label>
+                        <select name="unit_kerja_baru" id="edit-unit" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="Dokter">DOKTER</option>
+                            <option value="Perawat">PERAWAT</option>
+                            <option value="Tim it">tim IT</option>
+                            <option value="Keuangan">KEUANGAN</option>
+                            <option value="Humas">HUMAS</option>
+                        </select>
+                    </div>
+                    <div class="form-grup">
+                        <label>Ruangan</label>
+                        <input type="text" name="ruangan_baru" id="edit-ruangan" required>
+                    </div>
+
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" style="flex: 1; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">SIMPAN PERUBAHAN</button>
+                <button type="button" onclick="document.getElementById('modal-edit').style.display='none'" style="flex: 1; padding: 12px; background-color: #dc3545; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">BATAL</button>
+            </div>
+            </form>
+        </div>
+    </div>
     
     <script src="/dashboard.js"></script>
     

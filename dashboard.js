@@ -96,6 +96,9 @@ function bukaSlide(target) {
                                         <button onclick="ubahStatus('${pegawai.nip}', '${teksStatus}')" style="margin-left: 5px; padding: 3px 6px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background-color: #f8f9fa;">
                                         UBAH STATUS
                                         </button>
+                                        <button onclick="bukaFormEdit('${pegawai.nip}')" style="margin-left: 5px; padding: 3px 6px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background-color: #ffc107;" title="Edit Data">
+                                        EDIT DATA PEGAWAI
+                                        </button>
                                     </td>
                                 </tr>`;
                         });
@@ -152,9 +155,56 @@ function bukaSlide(target) {
                 reader.readAsDataURL(input.files[0])
             }
         }
+        function bukaFormEdit(nipPegawai) {
+            fetch('/api/pegawai/' + nipPegawai)
+            .then(respon => respon.json())
+            .then(data => {
+                
+                document.getElementById('edit-nip-lama').value = data.nip;
+                
+                document.getElementById('edit-nama').value = data.nama;
+                document.getElementById('edit-nip').value = data.nip;
+                document.getElementById('edit-umur').value = data.umur;
+                document.getElementById('edit-nomor').value = data.nomor;
+                document.getElementById('edit-email').value = data.email;
+                
+          
+                if(data.unit_kerja) document.getElementById('edit-unit').value = data.unit_kerja;
+                if(data.jabatan) document.getElementById('edit-jabatan').value = data.jabatan;
+                
+                document.getElementById('edit-pangkat').value = data.pangkat;
+                document.getElementById('edit-ruangan').value = data.ruangan;
+
+                
+            document.getElementById('modal-edit').style.display = 'flex';
+        })
+        .catch(error => console.log("Gagal mengambil data pegawai:", error));
+        }
+
+        function muatMasterUnitKerja() {
+            fetch('/api/unit-kerja') 
+            .then(respon => respon.json())
+            .then(daftarUnit => {
+                let selectFormUtama = document.querySelector('select[name="unit_kerja"]');
+                let selectFormEdit = document.getElementById('edit-unit');
+
+                if (!selectFormUtama) return;
+
+                let opsiHTML = `<option value="">-- Pilih Unit Kerja --</option>`;
+
+                daftarUnit.forEach(unit => {
+                    opsiHTML += `<option value="${unit.nama_unit.toLowerCase()}">${unit.nama_unit.toUpperCase()}</option>`;
+                });
+
+                selectFormUtama.innerHTML = opsiHTML;
+                if(selectFormEdit) selectFormEdit.innerHTML =opsiHTML;
+            })
+            .catch(error => console.log("Gagal memuat unit kerja:", error));
+        }
 
         ambilTotalSemuaPegawai(); 
         tarikDataPegawai('baru');
+        muatMasterUnitKerja();
 
         
         
