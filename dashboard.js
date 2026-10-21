@@ -89,6 +89,7 @@ function bukaSlide(target) {
                                     <td>${pegawai.jabatan ? pegawai.jabatan : '-'}</td>
                                     <td>${pegawai.pangkat ? pegawai.pangkat : '-'}</td>
                                     <td>${pegawai.ruangan ? pegawai.ruangan : '-'}</td>
+                                    <td>${pegawai.jenis_kepegawaian ? pegawai.jenis_kepegawaian : '-'}</td>
                                     <td>
                                         <span style="background-color: ${warnaStatus}; color: white; padding: 5px 10 px; border-radius: 4px; font-size: 12px; font-weight: bold;"> 
                                         ${teksStatus}
@@ -201,10 +202,93 @@ function bukaSlide(target) {
             })
             .catch(error => console.log("Gagal memuat unit kerja:", error));
         }
+        function muatMasterUnitKerja() {
+            fetch('/api/unit-kerja') 
+            .then(respon => respon.json())
+            .then(daftarUnit => {
+                let selectFormUtama = document.querySelector('select[name="unit_kerja"]');
+                let selectFormEdit = document.getElementById('edit-unit');
+
+                if (!selectFormUtama) return;
+
+                let opsiHTML = `<option value="">-- Pilih Unit Kerja --</option>`;
+
+                daftarUnit.forEach(unit => {
+                    opsiHTML += `<option value="${unit.nama_unit.toLowerCase()}">${unit.nama_unit.toUpperCase()}</option>`;
+                });
+
+                selectFormUtama.innerHTML = opsiHTML;
+                if(selectFormEdit) selectFormEdit.innerHTML =opsiHTML;
+            })
+            .catch(error => console.log("Gagal memuat unit kerja:", error));
+        }
+        function muatMasterJabatan() {
+            fetch('/api/jabatan') 
+            .then(respon => respon.json())
+            .then(daftarJabatan => {
+                let selectFormUtama = document.querySelector('select[name="jabatan"]');
+                let selectFormEdit = document.getElementById('edit-jabatan');
+
+                if (!selectFormUtama) return;
+
+                let opsiHTML = `<option value="">-- Pilih Jabatan --</option>`;
+
+                daftarJabatan.forEach(jbtn => {
+                    opsiHTML += `<option value="${jbtn.nama_jabatan.toLowerCase()}">${jbtn.nama_jabatan.toUpperCase()}</option>`;
+                });
+
+                selectFormUtama.innerHTML = opsiHTML;
+                if(selectFormEdit) selectFormEdit.innerHTML =opsiHTML;
+            })
+            .catch(error => console.log("Gagal memuat jabatan:", error));
+        }
+        function muatMasterPangkat() {
+            fetch('/api/pangkat') 
+            .then(respon => respon.json())
+            .then(daftarPangkat => {
+                let selectFormUtama = document.querySelector('select[name="pangkat"]');
+                let selectFormEdit = document.getElementById('edit-pangkat');
+
+                if (!selectFormUtama) return;
+
+                let opsiHTML = `<option value="">-- Pilih Pangkat --</option>`;
+
+                daftarPangkat.forEach(pkt=> {
+                    opsiHTML += `<option value="${pkt.nama_pangkat.toLowerCase()}">${pkt.nama_pangkat.toUpperCase()}</option>`;
+                });
+
+                selectFormUtama.innerHTML = opsiHTML;
+                if(selectFormEdit) selectFormEdit.innerHTML =opsiHTML;
+            })
+            .catch(error => console.log("Gagal memuat pangkat:", error));
+        }
+        function muatMasterJenisKepegawian() {
+            fetch('/api/jenis-kepegawaian') 
+            .then(respon => respon.json())
+            .then(daftarJenis => {
+                let selectFormUtama = document.querySelector('select[name="jenis_kepegawaian"]');
+                let selectFormEdit = document.getElementById('edit-jenis');
+
+                if (!selectFormUtama) return;
+
+                let opsiHTML = `<option value="">-- Pilih Jenis Kepegawaian --</option>`;
+
+                daftarJenis.forEach(jns=> {
+                    opsiHTML += `<option value="${jns.nama_jenis.toLowerCase()}">${jns.nama_jenis.toUpperCase()}</option>`;
+                });
+
+                selectFormUtama.innerHTML = opsiHTML;
+                if(selectFormEdit) selectFormEdit.innerHTML =opsiHTML;
+            })
+            .catch(error => console.log("Gagal memuat jenis kepegawaian:", error));
+        }
 
         ambilTotalSemuaPegawai(); 
         tarikDataPegawai('baru');
         muatMasterUnitKerja();
+        muatMasterJabatan();
+        muatMasterPangkat();
+        muatMasterJenisKepegawian();
 
         
         

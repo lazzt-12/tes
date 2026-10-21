@@ -264,6 +264,94 @@ app.post('/api/unit-kerja', async (req, res) =>{
     }
 });
 
+app.get('/api/jabatan', async (req, res) => {
+    try {
+        let hasil = await db.query("SELECT * FROM jabatan ORDER BY nama_jabatan ASC");
+        res.json(hasil.rows);
+    } catch (error) {
+        console.log("Error mengambil data master jabatan:", error.message);
+        res.status(500).send("Error database");
+    }
+});
+
+app.post('/api/jabatan', async (req, res) =>{
+    try{
+        let namaJabatan = req.body.nama_jabatan;
+        await db.query("INSERT INTO jabatan (nama_jabatan) VALUES ($1)", [namaJabatan]);
+        res.redirect('/dashboard');
+
+    } catch (error) {
+        console.log("Error menambah jabatan:", error.message);
+        res.status(500).send("Gagal menambah jabatan");
+    }
+});
+
+app.get('/api/pangkat', async (req, res) => {
+    try {
+        let hasil = await db.query("SELECT * FROM pangkat ORDER BY nama_pangkat ASC");
+        res.json(hasil.rows);
+    } catch (error) {
+        console.log("Error mengambil data master pangkat:", error.message);
+        res.status(500).send("Error database");
+    }
+});
+
+app.post('/api/pangkat', async (req, res) =>{
+    try{
+        let namaPangkat = req.body.nama_pangkatan;
+        await db.query("INSERT INTO pangkat (nama_pangkatan) VALUES ($1)", [namaPangkat]);
+        res.redirect('/dashboard');
+
+    } catch (error) {
+        console.log("Error menambah pangkat:", error.message);
+        res.status(500).send("Gagal menambah pangkat");
+    }
+});
+
+app.get('/api/jenis-kepegawaian', async (req, res) => {
+    try {
+        let hasil = await db.query("SELECT * FROM jenis_kepegawaian ORDER BY nama_jenis ASC");
+        res.json(hasil.rows);
+    } catch (error) {
+        console.log("Error mengambil data master jenis kepegawaian:", error.message);
+        res.status(500).send("Error database");
+    }
+});
+
+app.post('/api/jenis-kepegawaian', async (req, res) =>{
+    try{
+        let namaJenis = req.body.nama_jenis;
+        await db.query("INSERT INTO jenis_kepegawaian (nama_jenis) VALUES ($1)", [namaJenis]);
+        res.redirect('/dashboard');
+
+    } catch (error) {
+        console.log("Error menambah jenis kepegawaian:", error.message);
+        res.status(500).send("Gagal menambah jenis kepegawaian");
+    }
+});
+
+app.get('/export-pegawai', async (req, res) => {
+    try{
+        let hasil = await db.query("SELECT * FROM data_pegawai ORDER BY nama ASC");
+        let dataPegawai = hasil.rows;
+
+        let isiCSV = "NIP, Nama Pegawai, Umur, No Telepon, Email, Tanggal Masuk, Unit Kerja, Jabatan, Pangkat, Ruangan, Status\n ";
+
+        dataPegawai.forEach(p => {
+            let tanggal = p.tanggal_masuk ? new Date(p.tanggal_masuk).toLocaleDateString('id-ID') : '-';
+
+            isiCSV += `"${p.nip}","${p.nama}","${p.umur}","${p.nomor}","${p.email}","${tanggal}","${p.unit_kerja || '-'}","${p.jabatan || '-'}","${p.pangkat || '-'}","${p.ruangan || '-'}","${p.status || 'Aktif'}"\n`
+        });
+
+        res.header('Content-Type', 'text/csv');
+        res.attachment('Data_pegawai_HRSI.csv');
+        res.send(isiCSV);
+    } catch (error) {
+        console.log("Error export data:", error.message);
+        res.status(500).send("Gagal mengexport data ke excel");
+    }
+});
+
 app.listen(4001, () => {
     console.log("--> WEB MENYALA! Buka Chrome dan ketik: http://localhost:4001");
 });

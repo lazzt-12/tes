@@ -111,8 +111,8 @@
                         </div>
                         <div class="form-grup">
                             <label>Pangkat / Golongan</label>
-                            <input type="text" name="pangkat" placeholder="CONTOH: Golongan III/a" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px;">
-                        </div>
+                            <select name="pangkat" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px;"></select>
+                        </div>    
                         <div class="form-grup">
                             <label>Ruangan</label>
                             <input type="text" name="ruangan" placeholder="CONTOH: ruang beo lantai 2" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px;">
@@ -123,6 +123,10 @@
                                 <option value="Aktif">AKTIF</option>
                                 <option value="Nonaktif">NONAKTIF</option>
                             </select>
+                        </div>
+                        <div class="form-grup">
+                            <label>Jenis Kepegawaian</label>
+                            <select name="jenis_kepegawaian" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px;"></select>
                         </div>
                     </div>  
                 </div>
@@ -161,6 +165,9 @@
                     <button onclick="tarikDataPegawai('lama')" style="padding: 10px; background-color: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
                         tampilkan pegawai lama (> 1 tahun)
                     </button>
+                    <a href="/export-pegawai" style="padding: 10px; background-color: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none;">
+                        EXPORT KE EXCEL
+                    </a>
                 </div>
 
                 <div style="margin-bottom: 15px;">
@@ -184,6 +191,7 @@
                                 <th>Jabatan</th>
                                 <th>Pangkat</th>
                                 <th>Ruangan</th>
+                                <th>Jenis Kepegawaian</th>
                                 <th>Status</th>
                             </tr>
                     </thead>
@@ -220,7 +228,7 @@
                     </div>
                     <div class="form-grup">
                         <label>Pangkat</label>
-                        <input type="text" name="pangkat_baru" id="edit-pangkat" required>
+                        <select name="pangkat_baru" id="edit-pangkat" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;"></select>
                     </div>
                     <div class="form-grup">
                         <label>Email</label>
@@ -248,6 +256,10 @@
                     <div class="form-grup">
                         <label>Ruangan</label>
                         <input type="text" name="ruangan_baru" id="edit-ruangan" required>
+                    </div>
+                    <div class="form-grup">
+                        <label>Jenis Kepegawaian</label>
+                        <select name="jenis_kepegawaian_baru" id="edit-jenis" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;"></select>
                     </div>
 
                 </div>
