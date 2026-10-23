@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <title>LOG AKTIVITAS</title>
+        <style>
+            body {font-family: 'Segoe UI' 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: blanchedalmond; padding: 30px; margin: 0;}
+            .wadah {background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); max-width: 1200px; margin: auto;}
+            table{width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;}
+            th, td {padding: 12px 15px; border: 1px solid #dee2e6; text-align: left;}
+            th {background-color: #343a40; color: white; text-transform: uppercase; font-size: 13px;}
+            tr:nth-child(even) {background-color: #f8f9fa;}
+            a.btn-kembali {display: inline-block; padding: 8px 15px; background-color: #6c757d; color: white;text-decoration: none; border-radius: 4px; margin-bottom: 20px; font-weight: bold;}
+            a.btn-kembali:hover {background-color: #5a6268;}
+        </style>
+        <body>
+           <div class="wadah">
+            <a href="/dashboard" class="btn-kembali">&larr; KEMBALI KE DASHBOARD</a>
+            <H2 style="margin-top:0; color:  #333; border-bottom: 2px solid #eee; padding-bottom: 15px;">LOG AKTIVITAS PEGAWAI</H2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Waktu</th>
+                        <th style="width: 15%;">Pengguna</th>
+                        <th style="width: 15%;">Role</th>
+                        <th style="width: 15%;">Tindakan</th>
+                        <th style="width: 40%;">Keterangan Detail</th>
+                    </tr>
+                </thead>
+                <tbody id="wadah-tabel-log">
+                    <tr><td colspan='5' style="text-align: center; padding: 20px;">Belum ada data aktivitas yang direkam</td></tr>
+                </tbody>
+            </table>
+           </div> 
+           <script src="/logAktivitas.js"></script>
+        </body>
+    </head>
+</html>

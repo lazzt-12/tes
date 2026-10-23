@@ -1,12 +1,19 @@
 const express = require('express');
+const session = require('express-session');
 const { Client, Pool, Result } = require('pg');
 const multer = require('multer');
 const path = require('path');
-const { error } = require('console');
+const {error} = require('console');
 const app = express();
 
 
 app.use(express.urlencoded({ extended: true }));
+
+app.use (session({
+    secret: 'kunci-rahasia-hris-sangan-aman',
+    resave: false,
+    saveUninitialized: false 
+}));
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -28,6 +35,13 @@ const db = new Client({
     database: 'inputDataPegawai_db'
 });
 
+function catatLog(username, role, aksi, keterangan) {
+    const query = `INSERT INTO log_aktivitas (username, role, aksi, keterangan) VALUES ($1, $2, $3, $4)`;
+    db.query(query, [username, role, aksi, keterangan], (err) => {
+        if (err) console.log("Gagal merekam log:", err);
+    });
+}
+
 db.connect()
     .then(() => console.log("--> KONEKSI DATABASE SUKSES!"))
     .catch(err => console.error("--> GAGAL KONEK KE DATABASE:", err.message));
@@ -44,9 +58,38 @@ app.get('/dashboard', (req, res) => {
     res.sendFile(__dirname + '/dashboard.html')
 });
 
+app.get('/log-aktivitas', (req, res) => {
+    if(req.session && req.session.roleUser === 'superadmin') {
+        res.sendFile(__dirname + '/logAktivitas.html')
+    } else {
+        res.status(403).send("<h2>Akses Ditolak!</h2><p>Halaman Audit Trail ini khusus untuk Superadmin.</p><a href='/dashboard'>Kembali</a>");
+    }
+});
+
+app.get('/api/log-aktivitas', (req, res) => {
+    if (req.session && req.session.roleUser === 'superadmin') {
+        const query = 'SELECT * FROM log_aktivitas ORDER BY waktu DESC LIMIT 100';
+
+        db.query(query, (err, result) => {
+            if (err) {
+                console.log(err);
+                res.status(500).json({error: "Gagal mengambil data log"});
+            } else {
+                res.json(result.rows);
+            }
+        });
+    } else {
+        res.status(403).json({error: "akses di tolak"})
+    }
+})
+
 app.get('/dashboard.js', (req, res) => {
     res.sendFile(__dirname + '/dashboard.js');
 });
+
+app.get('/logAktivitas.js', (req, res) => {
+    res.sendFile(__dirname + '/logAktivitas.js')
+})
 
 app.get('/kelola-admin', (req, res) => {
     res.sendFile(__dirname + '/tambahAdmin.html')
@@ -100,6 +143,14 @@ app.put('/api/ubah-status/:nip/:status_baru', async (req, res) => {
         let perintahSQL = "UPDATE data_pegawai SET status = $1 WHERE nip = $2";
 
         await db.query(perintahSQL, [statusBaru, nipPegawai]);
+        if (req.session && req.session.userAktif) {
+            catatLog(
+                req.session.userAktif, 
+                req.session.roleUser, 
+                'UBAH STATUS', 
+                `Mengubah status pegawai NIP ${nipPegawai} menjadi ${statusBaru}`
+            );
+        }
 
         res.send("Status berhasil diubah menjadi " + statusBaru + "!");
     } catch (error) {
@@ -118,7 +169,7 @@ app.post('/lupa-pass', (req, res) => {
     db.query(sqlCek, [user], (err, Result) => {
 
         if(err) return res.send("terjadi kesalahan database saat mengecek username");
-        if (Result.rows.lengt === 0) {
+        if (Result.rows.length === 0) {
             return res.send("Maaf username tidak ada <br><br> <a href='/lupa-pass'>Coba Lagi</a>");
         }
 
@@ -148,7 +199,17 @@ app.post('/proses-login', (req, res) => {
             return res.send("terjadi kesalahan pada server");
         }
         if (Result.rows.length > 0) {
-            console.log("Login berhasil untuk pengguna: ", user);
+            req.session.userAktif = user;
+            req.session.roleUser = Result.rows[0].role;
+
+            console.log("Login berhasil untuk pengguna: ", req.session.roleUser);
+
+            catatLog(
+                user,
+                Result.rows[0].role,
+                'LOGIN',
+                'Pengguna berhasil masuk kedalam sistem'
+            )
             res.redirect('/dashboard');
         } else {
             console.log("percobaan login gagal.")
@@ -156,11 +217,30 @@ app.post('/proses-login', (req, res) => {
         }
     });
 });
+
+
+app.get('/api/cek-role', (req, res) => {
+    if (req.session && req.session.roleUser) {
+        res.json({role: req.session.roleUser});
+    } else {
+        res.json({role: 'tamu'});
+    }
+});
+
 app.post('/simpan', upload.single('foto_pegawai'), async (req, res) => {
     try {
         let nama = req.body.nama_pegawai;
         let umur = Number(req.body.umur_pegawai);
         let nip = Number(req.body.nip_pegawai);
+        let cekNIP = await db.query("SELECT * FROM data_pegawai WHERE nip = $1", [nip]);
+        if(cekNIP.rows.length > 0) {
+            return res.send(`
+                <script>
+                    alert('GAGAL MENYIMPAN: NIP ${nip} sudah terdaftar di sistem! Silakan periksa kembali.');
+                    window.location.href = '/dashboard';
+                </script>
+                `)
+        }
         let nomor = Number(req.body.no_telepon);
         let email = req.body.email_pegawai;
         let status = req.body.status_pegawai;
@@ -169,12 +249,22 @@ app.post('/simpan', upload.single('foto_pegawai'), async (req, res) => {
         let jabatan = req.body.jabatan;
         let pangkat = req.body.pangkat;
         let ruangan = req.body.ruangan;
+        let jenisKepegawaian = req.body.jenis_kepegawaian;
         let foto = req.file ? req.file.filename : null;
 
-        let perintahSQL = "INSERT INTO data_pegawai (nama, umur, nip, nomor, email, status, tanggal_masuk, unit_kerja, jabatan, pangkat, ruangan, foto) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)";
-        let isiData = [nama, umur, nip, nomor, email, status, tanggal_masuk, unitKerja, jabatan, pangkat, ruangan, foto];
+        let perintahSQL = "INSERT INTO data_pegawai (nama, umur, nip, nomor, email, status, tanggal_masuk, unit_kerja, jabatan, pangkat, ruangan, jenis_kepegawaian, foto) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)";
+        let isiData = [nama, umur, nip, nomor, email, status, tanggal_masuk, unitKerja, jabatan, pangkat, ruangan, jenisKepegawaian, foto];
 
         await db.query(perintahSQL, isiData);
+
+        if (req.session && req.session.userAktif) {
+            catatLog(
+                req.session.userAktif, 
+                req.session.roleUser, 
+                'TAMBAH DATA', 
+                `Menambahkan pegawai baru bernama ${nama} (NIP: ${nip})`
+            );
+        }
 
         res.redirect('/dashboard');
         
@@ -230,11 +320,20 @@ app.post('/update-pegawai', async (req, res) => {
         let jabatanBaru = req.body.jabatan_baru;
         let pangkatBaru = req.body.pangkat_baru;
         let ruanganbaru = req.body.ruangan_baru;
+        let jenisBaru = req.body.jenis_kepegawaian_baru;
 
-        let perintahSQL = "UPDATE data_pegawai set nama=$1, nip=$2, umur=$3, nomor=$4, email=$5, unit_kerja=$6, jabatan=$7, pangkat=$8, ruangan=$9 WHERE nip=$10";
-        let data = [namaBaru, nipBaru, umurBaru, nomorBaru, emailbaru, unitBaru, jabatanBaru, pangkatBaru, ruanganbaru, nipLama]
+        let perintahSQL = "UPDATE data_pegawai set nama=$1, nip=$2, umur=$3, nomor=$4, email=$5, unit_kerja=$6, jabatan=$7, pangkat=$8, ruangan=$9, jenis_kepegawaian=$10 WHERE nip=$11";
+        let data = [namaBaru, nipBaru, umurBaru, nomorBaru, emailbaru, unitBaru, jabatanBaru, pangkatBaru, ruanganbaru, jenisBaru, nipLama]
 
         await db.query(perintahSQL, data);
+        if (req.session && req.session.userAktif) {
+            catatLog(
+                req.session.userAktif, 
+                req.session.roleUser, 
+                'EDIT DATA', 
+                `Memperbarui data profil untuk NIP ${nipLama}`
+            );
+        }
         res.redirect('/dashboard');
     } catch (error) {
         console.log("Error saat melakukan update data:", error.message);
@@ -330,27 +429,62 @@ app.post('/api/jenis-kepegawaian', async (req, res) =>{
     }
 });
 
-app.get('/export-pegawai', async (req, res) => {
+app.get('/export-pegawai/:status', async (req, res) => {
     try{
-        let hasil = await db.query("SELECT * FROM data_pegawai ORDER BY nama ASC");
+        let filterStatus = req.params.status;
+        let sql = "";
+
+        if(filterStatus === 'aktif') {
+            sql ="SELECT * FROM data_pegawai WHERE status = 'Aktif' ORDER BY nama ASC";
+        } else if (filterStatus === 'nonaktif') {
+            sql ="SELECT * FROM data_pegawai WHERE status = 'Nonaktif' ORDER BY nama ASC";
+        } else {
+            sql ="SELECT * FROM data_pegawai ORDER BY nama ASC";
+        }
+        let hasil = await db.query(sql);
         let dataPegawai = hasil.rows;
 
-        let isiCSV = "NIP, Nama Pegawai, Umur, No Telepon, Email, Tanggal Masuk, Unit Kerja, Jabatan, Pangkat, Ruangan, Status\n ";
+        let isiCSV = "NIP; Nama Pegawai; Umur; No Telepon; Email; Tanggal Masuk; Unit Kerja; Jabatan; Pangkat; Ruangan; Status\n ";
 
         dataPegawai.forEach(p => {
             let tanggal = p.tanggal_masuk ? new Date(p.tanggal_masuk).toLocaleDateString('id-ID') : '-';
+            let status = p.status_pegawai ? p.status_pegawai : 'Aktif';
 
-            isiCSV += `"${p.nip}","${p.nama}","${p.umur}","${p.nomor}","${p.email}","${tanggal}","${p.unit_kerja || '-'}","${p.jabatan || '-'}","${p.pangkat || '-'}","${p.ruangan || '-'}","${p.status || 'Aktif'}"\n`
+            isiCSV += `"${p.nip}";"${p.nama}";"${p.umur}";"${p.nomor}";"${p.email}";"${tanggal}";"${p.unit_kerja || '-'}";"${p.jabatan || '-'}";"${p.pangkat || '-'}";"${p.ruangan || '-'}";"${status}"\n`
         });
 
+        let namaFile = `Data_Pegawai_${filterStatus.toLocaleUpperCase()}.csv`;
+
         res.header('Content-Type', 'text/csv');
-        res.attachment('Data_pegawai_HRSI.csv');
+        res.attachment(namaFile);
         res.send(isiCSV);
     } catch (error) {
         console.log("Error export data:", error.message);
         res.status(500).send("Gagal mengexport data ke excel");
     }
 });
+
+app.get('/api/statistik-unit', async (req, res) => {
+    try{
+        let sql = "SELECT unit_kerja, COUNT(*) as jumlah FROM data_pegawai GROUP BY unit_kerja ORDER BY jumlah DESC";
+        let hasil = await db.query(sql);
+        res.json(hasil.rows);
+    } catch (error) {
+        console.log("Error statistik unit kerja:", error.message);
+        res.status(500).send("Error database");
+    }
+});
+
+app.get('/api/statistik-jabatan', async (req, res) => {
+    try {
+        let sql = "SELECT jabatan, COUNT(*) as jumlah FROM data_pegawai GROUP BY jabatan ORDER BY jumlah DESC";
+        let hasil = await db.query(sql);
+        res.json(hasil.rows);
+    } catch (error) {
+        console.log("Error Statistik jabatan:", error.message);
+        res.status(500).send("Error database");
+    }
+})
 
 app.listen(4001, () => {
     console.log("--> WEB MENYALA! Buka Chrome dan ketik: http://localhost:4001");
