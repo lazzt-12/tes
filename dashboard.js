@@ -9,7 +9,8 @@ function cekHakAkses() {
         let tombolForm = document.getElementById('tombol-form');
         let tombolKelolaAdmin = document.getElementById('tombol-kelola-admin');
         let areaExport = document.getElementById('area-export');
-
+        let areaImport = document.getElementById('area-import');
+        let areaPdf = document.getElementById('area-pdf');
         if (rolePengguna === 'admin_pegawai') {
             if (tombolKelolaAdmin) tombolKelolaAdmin.style.display ='none';
         }
@@ -24,6 +25,8 @@ function cekHakAkses() {
             if (tombolKelolaAdmin) tombolKelolaAdmin.style.display = 'none';
             if (tombolForm) tombolForm.style.display = 'none';
             if(areaExport) areaExport.style.display = 'none';
+            if(areaImport) areaImport.style.display = 'none';
+            if(areaPdf) areaPdf.style.display = 'none';
             bukaSlide('tabel');
         }
         tarikDataPegawai('baru');
@@ -59,7 +62,7 @@ function bukaSlide(target) {
 
             if(tabel.style.display === 'none' || tabel.style.display === ''){
                 tabel.style.display ='block';
-                tombol.innerText ='TUTUP TAABEL';
+                tombol.innerText ='TUTUP TABEL';
                 tombol.style.backgroundColor ='#dc3545';
             } else {
                 tabel.style.display = 'none';
@@ -83,10 +86,12 @@ function bukaSlide(target) {
         function tarikDataPegawai(kategori) {
             let urlTujuan = '';
             
-            if (kategori === 'baru') {
-                urlTujuan = '/api/pegawai-baru';
-            } else if (kategori === 'lama') {
-                urlTujuan = '/api/pegawai-lama';
+            if (kategori === 'aktif') {
+                urlTujuan = '/api/pegawai-aktif';
+            } else if (kategori === 'nonaktif') {
+                urlTujuan = '/api/pegawai-nonaktif';
+            } else if (kategori === 'semua') {
+                urlTujuan = '/api/semua-pegawai'
             }
 
             fetch(urlTujuan)
@@ -122,6 +127,9 @@ function bukaSlide(target) {
                                     </button>
                                     <button onclick="bukaFormEdit('${pegawai.nip}')" style="margin-left: 5px; padding: 3px 6px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background-color: #ffc107;" title="Edit Data">
                                         EDIT DATA PEGAWAI
+                                    </button>
+                                    <button onclick="bukaRiwayat('${pegawai.nip}')" style="width: 100%; padding: 3px 6px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background-color: #17a2b8; color: white;" title="Lihat Riwayat">
+                                        LIHAT RIWAYAT
                                     </button>
                                 `;
                             }
@@ -441,11 +449,42 @@ function bukaSlide(target) {
             })
             .catch(error => console.log("Gagal memuat Grafik:", error));
         }
+        function bukaRiwayat(nipTarget) {
+            document.getElementById('judul-nip-riwayat').innerText = nipTarget;
+            document.getElementById('modal-riwayat').style.display = 'flex';
+            
+            fetch('/api/riwayat-pegawai/' + nipTarget)
+            .then(respon => respon.json())
+            .then(data => {
+                const wadah = document.getElementById('wadah-tabel-riwayat');
+                wadah.innerHTML = '';
+                
+                if (data.length === 0) {
+                    wadah.innerHTML = "<tr><td colspan='3' style='text-align: center; padding: 15px;'>Belum ada riwayat perubahan untuk pegawai ini.</td></tr>";
+                } else {
+                    data.forEach(log => {
+                        let waktuFormat = new Date(log.waktu).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+                        wadah.innerHTML += `
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${waktuFormat}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;"><strong>${log.username}</strong><br><span style="font-size: 11px; color: #6c757d;">${log.role}</span></td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${log.keterangan}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            })
+            .catch(error => console.log("Gagal memuat riwayat pegawai:", error));
+        }
+
+        function cetakPDF() {
+            window.print();
+        }
         
 
 
         ambilTotalSemuaPegawai(); 
-        //tarikDataPegawai('baru');
+        //tarikDataPegawai('aktif');
         muatMasterUnitKerja();
         muatMasterJabatan();
         muatMasterPangkat();
@@ -455,5 +494,7 @@ function bukaSlide(target) {
         muatGrafikJabatan();
         muatGrafikUnit();
         cekHakAkses();
+        tarikDataPegawai('semua');
+        
         
         

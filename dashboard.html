@@ -4,6 +4,46 @@
     <meta charset="UTF-8">
     <title>DASHBOARD DATA PEGAWAI</title>
     <style>
+
+        @media print{
+            @page {
+                size: potrait;
+                margin: 10mm;
+            }
+            body * {
+                visibility: hidden;
+            }
+            #area-tabel-pegawai, #area-tabel-pegawai * {
+                visibility: visible;
+            }
+            #area-tabel-pegawai {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
+            table {
+                font-size: 11px;
+            }
+            th, td {
+                padding: 6px !important;
+            }
+            .judul-cetak-pdf {
+                display: block !important;
+                font-size: 20px;
+                font-weight: bold;
+                color: #000 !important;
+            }
+            button, 
+            input[type="text"], 
+            #area-export, 
+            #area-import,
+            .menu-navigasi,
+            .header {
+                display: none !important;
+            }
+        }
         body {font-family: Arial, sans-serif; background-color: blanchedalmond; padding: 20px; margin: 0;}
         .header {display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;}
         .btn-logout {background-color: red; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; font-weight: bold;}
@@ -189,15 +229,19 @@
                 <button id="tombol-selengkapnya" onclick="bukaTabelPegawai()" style="padding: 10px 20px; background-color: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">BUKA TABEL</button>
             </div>
             <div id="area-tabel-pegawai">
+                <h2 class="judul-cetak-pdf" style="text-align: center; margin-bottom: 20px; display: none;">Data pegawai</h2>
                 <div style="margin-bottom: 15px; display: flex; gap: 10px;">
-                    <button onclick="tarikDataPegawai('baru')" style="padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                        tampilkan pegawai baru (< 1 tahun)
+                    <button onclick="tarikDataPegawai('semua')" style ="padding: 10px; background-color: rgb(17, 143, 216); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                        tampilkan semua data
                     </button>
-                    <button onclick="tarikDataPegawai('lama')" style="padding: 10px; background-color: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                        tampilkan pegawai lama (> 1 tahun)
+                    <button onclick="tarikDataPegawai('aktif')" style="padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                        tampilkan pegawai aktif
+                    </button>
+                    <button onclick="tarikDataPegawai('nonaktif')" style="padding: 10px; background-color: #ffc107; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                        tampilkan pegawai nonaktif 
                     </button>
                     <div id="area-export" style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; background-color: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                        <span style="font-weight: bold; color: #333;">Export Excel</span>
+                        <span style="font-weight: bold; color: #333;">Simpan data</span>
 
                         <a href="/export-pegawai/semua" style="padding: 8px 15px; background-color: #6f42c1; color: white; border-radius: 4px; font-weight: bold; text-decoration: none; font-size: 14px;">
                             TOTAL DATA
@@ -209,8 +253,12 @@
                             NONAKTIF
                         </a>
                     </div>
+                    <button id="area-pdf" onclick="cetakPDF()" style="background-color: rgb(157, 157, 45); color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                            cetak ke pdf
+                        </button>
                 </div>
 
+                
                 <div style="margin-bottom: 15px;">
                     <input type="text" id="input-pencarian" onkeyup="cariPegawai()" placeholder="cari nama, nip, atau pegawai..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px;">
                 </div>
@@ -239,7 +287,14 @@
                     <tbody  id="wadah-tabel">
                         <tr><td colspan="11">sedang memuat data base...</td></tr>
                     </tbody>
-                </table>
+                    </table>
+                </div>
+                <div id="area-import" style="background-color: turquoise; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0; color: #555;">Import Data</h3>
+                    <form action="/api/import_excel" name="file_excel" method="post" enctype="multipart/form-data">
+                        <input type="file" name="file_excel" accept=".xlsx, .xls, .csv" required style="margin-bottom: 10px; display: block;">
+                        <button type="submit" style="padding: 8px 15px; background-color: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;  ">Import</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -311,7 +366,28 @@
             </form>
         </div>
     </div>
-    
+    <div id="modal-riwayat" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background-color: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 650px; max-height: 80vh; overflow: auto;">
+            <h3 style="margin-top: 0; color: #333; border-bottom: 2px solid #17a2b8; padding-bottom: 10px;">Riwayat Perubahan Data (NIP: <span id="judul-nip-riwayat"></span>)</h3>
+            
+            <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px;">
+                <thead>
+                    <tr>
+                        <th style="padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; color: #333;">Waktu</th>
+                        <th style="padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; color: #333;">Pengubah</th>
+                        <th style="padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; color: #333;">Aktivitas</th>
+                    </tr>
+                </thead>
+                <tbody id="wadah-tabel-riwayat">
+                    <tr><td colspan='3' style='text-align: center; padding: 15px;'>Memuat data riwayat...</td></tr>
+                </tbody>
+            </table>
+            
+            <div style="text-align: right; margin-top: 20px;">
+                <button type="button" onclick="document.getElementById('modal-riwayat').style.display='none'" style="padding: 10px 20px; background-color: #6c757d; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">TUTUP</button>
+            </div>
+        </div>
+    </div>
     <script src="/dashboard.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     

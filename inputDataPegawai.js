@@ -3,6 +3,7 @@ const session = require('express-session');
 const { Client, Pool, Result } = require('pg');
 const multer = require('multer');
 const path = require('path');
+const xlsx = require('xlsx');
 const {error} = require('console');
 const app = express();
 
@@ -114,19 +115,30 @@ app.get('/api/total-pegawai', async (req, res) => {
 
 });
 
-app.get('/api/pegawai-baru', async (req, res) => {
+app.get('/api/semua-pegawai', async (req, res) => {
     try {
-        let perintahSQL = "select * from data_pegawai WHERE tanggal_masuk >= CURRENT_DATE - INTERVAL '1 YEAR'";
+        let perintahSQL = "SELECT * FROM data_pegawai ORDER BY nama ASC";
+        let hasil = await db.query(perintahSQL);
+        res.json(hasil.rows);
+    } catch (error) {
+        console.log("Error saat mengambil semua data pegawai", error.message);
+        res.status(500).send("Error database");
+    }
+});
+
+app.get('/api/pegawai-aktif', async (req, res) => {
+    try {
+        let perintahSQL = "select * from data_pegawai WHERE status = 'Aktif' OR status IS NULL ORDER BY nama ASC";
         let hasil = await db.query(perintahSQL)
         res.json(hasil.rows);
     } catch (error) {
-        console.log("Eror saat mengambil data pegawai baru", error.message);
+        console.log("Eror saat mengambil data pegawai AKTIF", error.message);
         res.status(500).send("error database")
     }
 });
-app.get('/api/pegawai-lama', async (req, res) => {
+app.get('/api/pegawai-nonaktif', async (req, res) => {
     try {
-        let perintahSQL = "select * from data_pegawai WHERE tanggal_masuk < CURRENT_DATE - INTERVAL '1 YEAR'";
+        let perintahSQL = "select * from data_pegawai WHERE status = 'Nonaktif' ORDER BY nama ASC";
         let hasil = await db.query(perintahSQL)
         res.json(hasil.rows);
     } catch (error) {
@@ -273,6 +285,81 @@ app.post('/simpan', upload.single('foto_pegawai'), async (req, res) => {
         res.send("Maaf, terjadi kesalahan sistem.");
     }
 });
+
+app.post('/api/import_excel', upload.single('file_excel'), async(req, res) => {
+    try {
+        if (!req.session || req.session.roleUser === 'user' || !req.session.roleUser) {
+            return res.send("<script>alert('Akses Ditolak! Anda tidak memiliki izin untuk melakukan import data.'); window.location.href='/dashboard';</script>");
+        }
+        if (!req.file) {
+            return res.send("<script>alert('Gagal: tidak ada file yang diunggah'); window.location.href='/dashboard';</script>")
+        }
+
+        let workbook = xlsx.readFile(req.file.path);
+        let namaSheetPertama = workbook.SheetNames[0];
+        let sheetData = workbook.Sheets[namaSheetPertama];
+
+        let daftarPegawaiBaru = xlsx.utils.sheet_to_json(sheetData, {defval: ""});
+
+        let jumlahBerhasil = 0;
+        let jumlahGagalDuplikat = 0;
+
+        for (let row of daftarPegawaiBaru) {
+            try {
+                let keys = Object.keys(row);
+                let keyNip = keys.find(k => k.trim().toLocaleLowerCase() === 'nip');
+                let nipRaw = keyNip ? row[keyNip] : null;
+                let nip = (!nipRaw || isNaN(Number(String(nipRaw).replace(/["']/g, "")))) ? 0 : Number (String(nipRaw).replace(/["']/g, ""));
+
+                if (nip === 0) {
+                    jumlahGagalDuplikat++;
+                    continue;
+                }
+
+                const getVal = (possibleNames) => {
+                    for (let name of possibleNames) {
+                        let foundKey = keys.find(k => k.trim().toLocaleLowerCase() === name.toLocaleLowerCase());
+                        if (foundKey && row[foundKey] !== undefined && row[foundKey] !== "") {
+                            return row[foundKey];
+                        }
+                    }
+                    return null;
+                };
+                let nama = getVal(['nama peg', 'nama', 'nama pegawai']) || '-';
+                let umur = Number(getVal(['umur'])) || 0;
+                let nomor = Number(getVal(['no telepon', 'nomor', 'no_telepon'])) || 0;
+                let email = getVal(['email']) || '-';
+                let status = getVal(['status']) || 'Aktif';
+                let unitKerja = getVal(['unit kerja', 'unit_kerja']) || '-';
+                let jabatan = getVal(['jabatan']) || '-';
+                let pangkat = getVal(['pangkat']) || '-';
+                let ruangan = getVal(['ruangan']) || '-';
+                let jenisKepegawaian = getVal(['jenis_kepegawaian', 'jenis pegawai', 'jenis kepegawaian', 'jenis']) || '-';
+
+                let cekNIP = await db.query("SELECT * FROM data_pegawai WHERE nip = $1", [nip]);
+                if (cekNIP.rows.length > 0) {
+                    jumlahGagalDuplikat++;
+                    continue;
+                }
+                let sql = `INSERT INTO data_pegawai (nama, nip, umur, nomor, email, status, unit_kerja, jabatan, pangkat, ruangan, jenis_kepegawaian)
+                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`;
+                await db.query(sql, [nama, nip, umur, nomor, email, status, unitKerja, jabatan, pangkat, ruangan, jenisKepegawaian]);
+                jumlahBerhasil++;
+            } catch (errBaris) {
+                console.log("Lewati baris karena error:", errBaris.message);
+                jumlahGagalDuplikat++;
+            }
+        }
+
+        if (req.session && req.session.userAktif) {
+            catatLog(req.session.userAktif, req.session.roleUser, 'IMPORT EXCEL', `Berhasil mengimport ${jumlahBerhasil} data pegawai, ${jumlahGagalDuplikat} data dilewati/duplikat.`);
+        }
+        res.send(`<script1>alert('Import Selesai, data berhasil: ${jumlahBerhasil}, Dilewati: ${jumlahGagalDuplikat}'); window.location.href='/dashboard';</script>`);
+    } catch (error) {
+        console.log("Error saat import Excel: ", error.message);
+        res.send("<script>alert('Terjadi kesalahan sistem saat membaca file Excel.'); window.location.href='/dashboard';</script>");
+    }
+})
 
 app.post('/kelola-admin', async (req, res) => {
     try {
@@ -444,13 +531,15 @@ app.get('/export-pegawai/:status', async (req, res) => {
         let hasil = await db.query(sql);
         let dataPegawai = hasil.rows;
 
-        let isiCSV = "NIP; Nama Pegawai; Umur; No Telepon; Email; Tanggal Masuk; Unit Kerja; Jabatan; Pangkat; Ruangan; Status\n ";
+        let isiCSV = "NIP; Nama Pegawai; Umur; No Telepon; Email; Tanggal Masuk; Unit Kerja; Jabatan; Pangkat; Ruangan; Jenis Kepegawaian; Status\n";
 
         dataPegawai.forEach(p => {
             let tanggal = p.tanggal_masuk ? new Date(p.tanggal_masuk).toLocaleDateString('id-ID') : '-';
-            let status = p.status_pegawai ? p.status_pegawai : 'Aktif';
+            let status = p.status ? p.status : 'Aktif';
+            
+            let jenisPegawai = p.jenis_kepegawaian ? p.jenis_kepegawaian : '-';
 
-            isiCSV += `"${p.nip}";"${p.nama}";"${p.umur}";"${p.nomor}";"${p.email}";"${tanggal}";"${p.unit_kerja || '-'}";"${p.jabatan || '-'}";"${p.pangkat || '-'}";"${p.ruangan || '-'}";"${status}"\n`
+            isiCSV += `"${p.nip}";"${p.nama}";"${p.umur}";"${p.nomor}";"${p.email}";"${tanggal}";"${p.unit_kerja || '-'}";"${p.jabatan || '-'}";"${p.pangkat || '-'}";"${p.ruangan || '-'}";"${jenisPegawai}";"${status}"\n`
         });
 
         let namaFile = `Data_Pegawai_${filterStatus.toLocaleUpperCase()}.csv`;
@@ -484,7 +573,22 @@ app.get('/api/statistik-jabatan', async (req, res) => {
         console.log("Error Statistik jabatan:", error.message);
         res.status(500).send("Error database");
     }
+});
+app.get('/api/riwayat-pegawai/:nip', async (req, res) => {
+    try {
+        let nipTarget = req.params.nip;
+
+        let query = "SELECT * FROM log_aktivitas WHERE keterangan LIKE $1 ORDER BY waktu DESC";
+
+        let hasil = await db.query(query, [`%${nipTarget}%`]);
+        res.json(hasil.rows);
+    } catch (error) {
+        console.log("Error ambil riwayat:", error.message);
+        res.status(500).send("Error database");
+    }
 })
+
+
 
 app.listen(4001, () => {
     console.log("--> WEB MENYALA! Buka Chrome dan ketik: http://localhost:4001");
